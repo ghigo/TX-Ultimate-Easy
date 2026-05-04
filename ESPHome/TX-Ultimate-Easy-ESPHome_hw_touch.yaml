@@ -184,9 +184,9 @@ binary_sensor:
             id: bs_multi_touch
             state: OFF  # yamllint disable-line rule:truthy
 
-  - id: bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
-    name: Swipe-${ID_SWIPE_RIGHT_OR_DOWN_TEXT} event
-    icon: mdi:gesture-swipe-${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
+  - id: bs_swipe_left
+    name: Swipe-left event
+    icon: mdi:gesture-swipe-left
     internal: false
     disabled_by_default: true
     platform: template
@@ -194,11 +194,11 @@ binary_sensor:
       then:
         - delay: !lambda return nr_touch_duration->state;
         - binary_sensor.template.publish:
-            id: bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
+            id: bs_swipe_left
             state: OFF  # yamllint disable-line rule:truthy
-  - id: bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}
-    name: Swipe ${ID_SWIPE_LEFT_OR_UP_TEXT} event
-    icon: mdi:gesture-swipe-${ID_SWIPE_LEFT_OR_UP_TEXT}
+  - id: bs_swipe_right
+    name: Swipe-right event
+    icon: mdi:gesture-swipe-right
     internal: false
     disabled_by_default: true
     platform: template
@@ -206,7 +206,31 @@ binary_sensor:
       then:
         - delay: !lambda return nr_touch_duration->state;
         - binary_sensor.template.publish:
-            id: bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}
+            id: bs_swipe_right
+            state: OFF  # yamllint disable-line rule:truthy
+  - id: bs_swipe_up
+    name: Swipe-up event
+    icon: mdi:gesture-swipe-up
+    internal: ${IS_EU_MODEL}
+    disabled_by_default: true
+    platform: template
+    on_press:
+      then:
+        - delay: !lambda return nr_touch_duration->state;
+        - binary_sensor.template.publish:
+            id: bs_swipe_up
+            state: OFF  # yamllint disable-line rule:truthy
+  - id: bs_swipe_down
+    name: Swipe-down event
+    icon: mdi:gesture-swipe-down
+    internal: ${IS_EU_MODEL}
+    disabled_by_default: true
+    platform: template
+    on_press:
+      then:
+        - delay: !lambda return nr_touch_duration->state;
+        - binary_sensor.template.publish:
+            id: bs_swipe_down
             state: OFF  # yamllint disable-line rule:truthy
 
 esphome:
@@ -262,8 +286,10 @@ script:
     then:
       - lambda: |-
           bs_multi_touch->publish_state(false);
-          bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}->publish_state(false);
-          bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}->publish_state(false);
+          bs_swipe_left->publish_state(false);
+          bs_swipe_right->publish_state(false);
+          bs_swipe_up->publish_state(false);
+          bs_swipe_down->publish_state(false);
 
   - id: boot_initialize_touch_gang
     mode: restart
@@ -331,21 +357,27 @@ script:
     #   - HW Buttons
     #   - HW Vibration
 
-  - id: touch_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
+  - id: touch_swipe_right
     mode: restart
     then:
       # Extended by:
       #   - HW Buttons
       - lambda: |-
-          bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}->publish_state(true);
+          bs_swipe_right->publish_state(true);
+          #if TX_ULTIMATE_EASY_IS_US_MODEL
+          bs_swipe_down->publish_state(true);
+          #endif
 
-  - id: touch_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}
+  - id: touch_swipe_left
     mode: restart
     then:
       # Extended by:
       #   - HW Buttons
       - lambda: |-
-          bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}->publish_state(true);
+          bs_swipe_left->publish_state(true);
+          #if TX_ULTIMATE_EASY_IS_US_MODEL
+          bs_swipe_up->publish_state(true);
+          #endif
 
 switch:
   - id: sw_touch_panel_power
@@ -406,7 +438,7 @@ tx_ultimate_easy:
             {"position", std::to_string(touch.x)}
           });
           ESP_LOGI("${TAG_HW_TOUCH}", "Swipe ${ID_SWIPE_LEFT_OR_UP_TEXT}");
-          touch_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}->execute();
+          touch_swipe_left->execute();
 
   on_swipe_right:
     then:
@@ -417,7 +449,7 @@ tx_ultimate_easy:
             {"position", std::to_string(touch.x)}
           });
           ESP_LOGI("${TAG_HW_TOUCH}", "Swipe ${ID_SWIPE_RIGHT_OR_DOWN_TEXT}");
-          touch_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}->execute();
+          touch_swipe_right->execute();
 
   on_touch_event:
     - lambda: |-

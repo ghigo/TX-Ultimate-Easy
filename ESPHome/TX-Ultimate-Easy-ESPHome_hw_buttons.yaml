@@ -415,11 +415,11 @@ script:
             id(click_counter) = 0;
           }
 
-  - id: !extend touch_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}
+  - id: !extend touch_swipe_left
     then:
       - script.execute: buttons_reset_state
 
-  - id: !extend touch_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
+  - id: !extend touch_swipe_right
     then:
       - script.execute: buttons_reset_state
 
