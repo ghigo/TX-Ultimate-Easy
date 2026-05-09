@@ -38,11 +38,8 @@ api:
 binary_sensor:
   - id: bs_boot_completed
     name: Boot Completed
-    internal: false
-    disabled_by_default: false
+    internal: true
     platform: template
-    entity_category: diagnostic
-    device_class: connectivity
     icon: mdi:rocket-launch
     on_state:
       then:
@@ -263,30 +260,7 @@ script:
           if (esphome::tx_ultimate_easy::cached_device_name.empty()) {
             esphome::tx_ultimate_easy::initialize_cached_device_name(App.get_name());
             ESP_LOGI("${TAG_COMMON}", "Device name: %s", esphome::tx_ultimate_easy::cached_device_name.c_str());
-            tx_device_name->publish_state(esphome::tx_ultimate_easy::cached_device_name);
           }
-
-text_sensor:
-  - id: tx_fw_version
-    name: TX Ultimate Easy Firmware Version
-    platform: template
-    entity_category: diagnostic
-    icon: mdi:tag-text-outline
-    internal: false
-    update_interval: never
-    lambda: |-
-      return {"${version}"};
-
-  - id: tx_device_name
-    name: Device Name
-    platform: template
-    icon: mdi:identifier
-    entity_category: diagnostic
-    internal: false
-    disabled_by_default: false
-    update_interval: never
-    lambda: |-
-      return { esphome::tx_ultimate_easy::cached_device_name };
 
 tx_ultimate_easy:
   id: tx_ultimate
@@ -299,7 +273,5 @@ wifi:
 
   on_connect:
     then:
-      - lambda: |-
-          tx_fw_version->publish_state("${version}");
-          update_device_name->execute();
+      - script.execute: update_device_name
 ...

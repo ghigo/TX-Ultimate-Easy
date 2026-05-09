@@ -27,6 +27,66 @@
 [buymeacoffee-shield]: https://img.shields.io/static/v1?label=Buy%20me%20an%20ice%20cream&message=❄&color=blue
 [buymeacoffee]: https://www.buymeacoffee.com/edwardfirmo
 
+## ⚠️ Breaking Changes — Events Refactor
+
+**Action Required for users with automations on per-button click/double-click/long-press or on multi-touch/swipe gestures.**
+
+Touch gestures are now exposed to Home Assistant as native [`event`](https://www.home-assistant.io/integrations/event/) entities instead of momentary template `binary_sensor`s. This eliminates a 200 ms race window where rapid gestures could be coalesced and replaces 15 transient binary sensors with 5 event entities. Long-touch-release on the slider, previously only written to the firmware log, is now also surfaced to HA.
+
+### What changed
+
+| Removed entity                                  | Replaced by         | `event_type`                |
+|-------------------------------------------------|---------------------|-----------------------------|
+| `binary_sensor.button_<N>_click_event`          | `event.button_<N>`  | `click`                     |
+| `binary_sensor.button_<N>_double_click_event`   | `event.button_<N>`  | `double_click`              |
+| `binary_sensor.button_<N>_long_press_event`     | `event.button_<N>`  | `long_press`                |
+| `binary_sensor.multi_touch_event`               | `event.touch_panel` | `multi_touch`               |
+| `binary_sensor.swipe_<dir>_event`               | `event.touch_panel` | `swipe_left` / `swipe_right` (EU) or `swipe_up` / `swipe_down` (US) |
+| _(none — was firmware-log-only)_                | `event.touch_panel` | `long_touch`                |
+| `binary_sensor.button_<N>` (press/release)      | `event.button_<N>`  | implicit in `click` / `double_click` / `long_press` |
+
+The press/release `binary_sensor.button_<N>` entities are also removed. Their on/off state was already implicit in the new `event.button_<N>` entity — the gesture event is what users actually care about, and the raw press/release just produced two extra Activity log lines per tap. Automations that triggered on the binary_sensor going `on` should migrate to the corresponding `event` trigger.
+
+All new event entities are **enabled by default** — clicks, swipes, and other gestures appear in the device's Activity card and HA logbook out of the box. (The replaced `binary_sensor.*_event` entities were `disabled_by_default`; the new `event` entities are not. Users upgrading from a build that had the old entities disabled can leave them as-is — the new event entities are independent registry entries.)
+
+### Migrating an automation
+
+Old (binary_sensor going `on`):
+
+```yaml
+trigger:
+  - platform: state
+    entity_id: binary_sensor.button_1_double_click_event
+    to: "on"
+```
+
+New (`event` entity firing a specific type):
+
+```yaml
+trigger:
+  - platform: event
+    event_type: state_changed
+    event_data:
+      entity_id: event.button_1
+  # or, more concisely, the dedicated event-entity trigger:
+  - platform: state
+    entity_id: event.button_1
+    attribute: event_type
+    to: double_click
+```
+
+The companion `homeassistant.event` bus events fired by the firmware (`esphome.tx_ultimate_easy` with `domain: touch`) are unchanged — automations using those continue to work without modification.
+
+### Diagnostic card cleanup
+
+Three Diagnostic-card entities are also removed:
+
+- `binary_sensor.boot_completed` — now firmware-internal. The on/off state still drives internal "skip during boot" guards and dump-config logging; users no longer see a misleading `Unknown` row.
+- `text_sensor.device_name` — duplicate of the device name shown in the card header. Use `App.get_name()` in templates if you need the sanitized name.
+- `text_sensor.tx_ultimate_easy_firmware_version` — duplicate of the OTA `update` entity (shown as **Firmware — Up-to-date** in the Configuration card) and the firmware string in the card header.
+
+Automations referencing these entities should switch to the OTA `update` entity / device card metadata.
+
 ## ⚠️ Breaking Changes in Version 2025.12.2
 
 **Action Required**: Existing users must update their YAML configuration to include new required substitutions.
