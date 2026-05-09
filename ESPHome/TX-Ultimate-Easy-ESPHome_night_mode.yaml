@@ -89,6 +89,7 @@ light:
     red: out_night_mode_red
     green: out_night_mode_green
     blue: out_night_mode_blue
+    entity_category: config
     icon: mdi:weather-night
     restore_mode: RESTORE_DEFAULT_OFF
 
