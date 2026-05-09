@@ -602,7 +602,6 @@ script:
           ESP_LOGV("${TAG_HW_RELAYS}", "  state: %s", ONOFF(state));
 
           static const uint32_t LIGHT_TRANSITION_TURN_ON = ${LIGHT_TRANSITION_TURN_ON};
-          static const uint32_t LIGHT_TRANSITION_TURN_OFF = ${LIGHT_TRANSITION_TURN_OFF};
           static const uint8_t LIGHT_BRIGHTNESS_TURN_ON = ${LIGHT_BRIGHTNESS_TURN_ON};
 
           switch (light_group) {
@@ -625,9 +624,25 @@ script:
                 ESP_LOGI("${TAG_HW_RELAYS}",
                           "Turn-off ${LIGHT_MODE_BOTTOM_OR_LEFT_TEXT} light for Relay %" PRIu8, light_index+1);
                 auto call = id(gb_lights_1)[light_index]->turn_off();
-                if (LIGHT_TRANSITION_TURN_OFF > 0)
-                  call.set_transition_length(LIGHT_TRANSITION_TURN_OFF);  // in ms
+                // Skip the legacy fade so the relay segment hands off cleanly to whichever
+                // underlying light gets re-painted next; otherwise the user sees
+                // "fade to black" before the underlying color reappears.
+                call.set_transition_length(0);
                 call.perform();
+
+                // Re-paint any directional/aggregate light that is currently on so the
+                // relay segment falls back to the underlying color rather than staying black.
+                // ESPHome partitions don't compose; whoever wrote last wins, so we re-publish
+                // the still-on lights to over-paint the freshly-blacked relay range.
+                for (auto* l : std::initializer_list<light::LightState*>{
+                       id(lights_all), id(light_top), id(light_bottom),
+                       id(light_left), id(light_right) }) {
+                  if (l->remote_values.is_on()) {
+                    auto c = l->turn_on();
+                    c.set_transition_length(0);
+                    c.perform();
+                  }
+                }
               }
               break;
             case 2:
@@ -649,9 +664,19 @@ script:
                 ESP_LOGI("${TAG_HW_RELAYS}",
                           "Turn-off ${LIGHT_MODE_TOP_OR_RIGHT_TEXT} light for Relay %" PRIu8, light_index+1);
                 auto call = id(gb_lights_2)[light_index]->turn_off();
-                if (LIGHT_TRANSITION_TURN_OFF > 0)
-                  call.set_transition_length(LIGHT_TRANSITION_TURN_OFF);  // in ms
+                // See case 1 above for the rationale on transition_length(0) and the repaint loop.
+                call.set_transition_length(0);
                 call.perform();
+
+                for (auto* l : std::initializer_list<light::LightState*>{
+                       id(lights_all), id(light_top), id(light_bottom),
+                       id(light_left), id(light_right) }) {
+                  if (l->remote_values.is_on()) {
+                    auto c = l->turn_on();
+                    c.set_transition_length(0);
+                    c.perform();
+                  }
+                }
               }
               break;
             default:
