@@ -43,6 +43,9 @@ Touch gestures are now exposed to Home Assistant as native [`event`](https://www
 | `binary_sensor.multi_touch_event`               | `event.touch_panel` | `multi_touch`               |
 | `binary_sensor.swipe_<dir>_event`               | `event.touch_panel` | `swipe_left` / `swipe_right` (EU) or `swipe_up` / `swipe_down` (US) |
 | _(none — was firmware-log-only)_                | `event.touch_panel` | `long_touch`                |
+| `binary_sensor.button_<N>` (press/release)      | `event.button_<N>`  | implicit in `click` / `double_click` / `long_press` |
+
+The press/release `binary_sensor.button_<N>` entities are also removed. Their on/off state was already implicit in the new `event.button_<N>` entity — the gesture event is what users actually care about, and the raw press/release just produced two extra Activity log lines per tap. Automations that triggered on the binary_sensor going `on` should migrate to the corresponding `event` trigger.
 
 All new event entities are **enabled by default** — clicks, swipes, and other gestures appear in the device's Activity card and HA logbook out of the box. (The replaced `binary_sensor.*_event` entities were `disabled_by_default`; the new `event` entities are not. Users upgrading from a build that had the old entities disabled can leave them as-is — the new event entities are independent registry entries.)
 

@@ -36,31 +36,6 @@ substitutions:
 
   TAG_HW_BUTTONS: tx_ultimate_easy.hw.buttons
 
-binary_sensor:
-  - id: bs_button_1
-    name: Button 1
-    icon: mdi:gesture-tap-box
-    platform: template
-    internal: ${gang_count < 1}
-
-  - id: bs_button_2
-    name: Button 2
-    icon: mdi:gesture-tap-box
-    platform: template
-    internal: ${gang_count < 2}
-
-  - id: bs_button_3
-    name: Button 3
-    icon: mdi:gesture-tap-box
-    platform: template
-    internal: ${gang_count < 3}
-
-  - id: bs_button_4
-    name: Button 4
-    icon: mdi:gesture-tap-box
-    platform: template
-    internal: ${gang_count < 4}
-
 esphome:
   platformio_options:
     build_flags:
@@ -146,7 +121,6 @@ script:
           id(button_press_start_time) = 0;
           id(last_release_time) = 0;
           id(click_counter) = 0;
-          buttons_release->execute();
 
   - id: button_click_event
     mode: restart
@@ -162,19 +136,6 @@ script:
           else event_name = "multiple_click";
           button_action->execute(button, event_name.c_str(), click_count);
 
-  - id: buttons_release
-    mode: restart
-    then:
-      - lambda: |-
-          std::vector<binary_sensor::BinarySensor*> buttons = {
-            bs_button_1, bs_button_2, bs_button_3, bs_button_4
-          };
-          for (auto* button : buttons) {
-            if (button->state) {
-              button->publish_state(false);
-            }
-          }
-
   - id: buttons_reset_state
     mode: restart
     then:
@@ -185,7 +146,6 @@ script:
           id(click_counter) = 0;
           id(button_press_button) = 0;
           id(button_press_position) = 0;
-          buttons_release->execute();
 
   - id: !extend dump_config
     then:
@@ -313,27 +273,11 @@ script:
           // Set press start time for this press (for duration calculation)
           id(button_press_start_time) = current_time;
           id(button_press_button) = button;
-          // Update binary sensor
-          switch (button) {
-            case 1:
-              bs_button_1->publish_state(true);
-              break;
-            case 2:
-              bs_button_2->publish_state(true);
-              break;
-            case 3:
-              bs_button_3->publish_state(true);
-              break;
-            case 4:
-              bs_button_4->publish_state(true);
-              break;
-          }
 
   - id: !extend touch_on_release
     then:
       - lambda: |-
           uint32_t current_time = millis();
-          buttons_release->execute();
           if (id(button_press_start_time) > 0) {
             uint32_t press_duration;
             // Handle millis() overflow (wraps after ~49 days)
