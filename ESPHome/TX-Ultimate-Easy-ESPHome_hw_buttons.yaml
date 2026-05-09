@@ -125,49 +125,19 @@ script:
             {"position", std::to_string(id(button_press_position))}
           });
           ESP_LOGI("${TAG_HW_BUTTONS}", "Button %" PRIu8 " action: '%s'", button, action.c_str());
-          if (action == "click") {
+          if (action == "click" || action == "double_click" || action == "long_press") {
             switch (button) {
               case ${BUTTON_1_ID}:
-                bs_button_1_click_event->publish_state(true);
+                ev_button_1->trigger(action);
                 break;
               case ${BUTTON_2_ID}:
-                bs_button_2_click_event->publish_state(true);
+                ev_button_2->trigger(action);
                 break;
               case ${BUTTON_3_ID}:
-                bs_button_3_click_event->publish_state(true);
+                ev_button_3->trigger(action);
                 break;
               case ${BUTTON_4_ID}:
-                bs_button_4_click_event->publish_state(true);
-                break;
-            }
-          } else if (action == "double_click") {
-            switch (button) {
-              case ${BUTTON_1_ID}:
-                bs_button_1_double_click_event->publish_state(true);
-                break;
-              case ${BUTTON_2_ID}:
-                bs_button_2_double_click_event->publish_state(true);
-                break;
-              case ${BUTTON_3_ID}:
-                bs_button_3_double_click_event->publish_state(true);
-                break;
-              case ${BUTTON_4_ID}:
-                bs_button_4_double_click_event->publish_state(true);
-                break;
-            }
-          } else if (action == "long_press") {
-            switch (button) {
-              case ${BUTTON_1_ID}:
-                bs_button_1_long_press_event->publish_state(true);
-                break;
-              case ${BUTTON_2_ID}:
-                bs_button_2_long_press_event->publish_state(true);
-                break;
-              case ${BUTTON_3_ID}:
-                bs_button_3_long_press_event->publish_state(true);
-                break;
-              case ${BUTTON_4_ID}:
-                bs_button_4_long_press_event->publish_state(true);
+                ev_button_4->trigger(action);
                 break;
             }
           }

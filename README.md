@@ -27,6 +27,52 @@
 [buymeacoffee-shield]: https://img.shields.io/static/v1?label=Buy%20me%20an%20ice%20cream&message=❄&color=blue
 [buymeacoffee]: https://www.buymeacoffee.com/edwardfirmo
 
+## ⚠️ Breaking Changes — Events Refactor
+
+**Action Required for users with automations on per-button click/double-click/long-press or on multi-touch/swipe gestures.**
+
+Touch gestures are now exposed to Home Assistant as native [`event`](https://www.home-assistant.io/integrations/event/) entities instead of momentary template `binary_sensor`s. This eliminates a 200 ms race window where rapid gestures could be coalesced and replaces 15 transient binary sensors with 5 event entities.
+
+### What changed
+
+| Removed entity                                  | Replaced by         | `event_type`                |
+|-------------------------------------------------|---------------------|-----------------------------|
+| `binary_sensor.button_<N>_click_event`          | `event.button_<N>`  | `click`                     |
+| `binary_sensor.button_<N>_double_click_event`   | `event.button_<N>`  | `double_click`              |
+| `binary_sensor.button_<N>_long_press_event`     | `event.button_<N>`  | `long_press`                |
+| `binary_sensor.multi_touch_event`               | `event.touch_panel` | `multi_touch`               |
+| `binary_sensor.swipe_<dir>_event`               | `event.touch_panel` | `swipe_left` / `swipe_right` (EU) or `swipe_up` / `swipe_down` (US) |
+
+All new event entities are `disabled_by_default`, matching the previous behavior — enable them in the entity registry to use them.
+
+### Migrating an automation
+
+Old (binary_sensor going `on`):
+
+```yaml
+trigger:
+  - platform: state
+    entity_id: binary_sensor.button_1_double_click_event
+    to: "on"
+```
+
+New (`event` entity firing a specific type):
+
+```yaml
+trigger:
+  - platform: event
+    event_type: state_changed
+    event_data:
+      entity_id: event.button_1
+  # or, more concisely, the dedicated event-entity trigger:
+  - platform: state
+    entity_id: event.button_1
+    attribute: event_type
+    to: double_click
+```
+
+The companion `homeassistant.event` bus events fired by the firmware (`esphome.tx_ultimate_easy` with `domain: touch`) are unchanged — automations using those continue to work without modification.
+
 ## ⚠️ Breaking Changes in Version 2025.12.2
 
 **Action Required**: Existing users must update their YAML configuration to include new required substitutions.

@@ -422,15 +422,13 @@ script:
             return;
           }
 
-          // Ignore if other touch events are active
-          if (bs_multi_touch->state ||
-              bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}->state ||
-              bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}->state) {
-            ESP_LOGV("${TAG_HW_RELAYS}", "Multi-touch: %s", YESNO(bs_multi_touch->state));
-            ESP_LOGV("${TAG_HW_RELAYS}", "Swipe ${ID_SWIPE_LEFT_OR_UP_TEXT}: %s",
-                                          YESNO(bs_swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}->state));
-            ESP_LOGV("${TAG_HW_RELAYS}", "Swipe ${ID_SWIPE_RIGHT_OR_DOWN_TEXT}: %s",
-                                          YESNO(bs_swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}->state));
+          // Ignore if a multi-touch or swipe gesture fired within the touch-event window.
+          // Replaces the legacy momentary-binary_sensor state check; same semantic effect.
+          const uint32_t gesture_ms = id(last_touch_gesture_time);
+          if (gesture_ms != 0 &&
+              (millis() - gesture_ms) < static_cast<uint32_t>(nr_touch_duration->state)) {
+            ESP_LOGV("${TAG_HW_RELAYS}", "Recent gesture %ums ago, click suppressed",
+                     static_cast<unsigned>(millis() - gesture_ms));
             return;
           }
 
