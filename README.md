@@ -31,7 +31,7 @@
 
 **Action Required for users with automations on per-button click/double-click/long-press or on multi-touch/swipe gestures.**
 
-Touch gestures are now exposed to Home Assistant as native [`event`](https://www.home-assistant.io/integrations/event/) entities instead of momentary template `binary_sensor`s. This eliminates a 200 ms race window where rapid gestures could be coalesced and replaces 15 transient binary sensors with 5 event entities.
+Touch gestures are now exposed to Home Assistant as native [`event`](https://www.home-assistant.io/integrations/event/) entities instead of momentary template `binary_sensor`s. This eliminates a 200 ms race window where rapid gestures could be coalesced and replaces 15 transient binary sensors with 5 event entities. Long-touch-release on the slider, previously only written to the firmware log, is now also surfaced to HA.
 
 ### What changed
 
@@ -42,6 +42,7 @@ Touch gestures are now exposed to Home Assistant as native [`event`](https://www
 | `binary_sensor.button_<N>_long_press_event`     | `event.button_<N>`  | `long_press`                |
 | `binary_sensor.multi_touch_event`               | `event.touch_panel` | `multi_touch`               |
 | `binary_sensor.swipe_<dir>_event`               | `event.touch_panel` | `swipe_left` / `swipe_right` (EU) or `swipe_up` / `swipe_down` (US) |
+| _(none — was firmware-log-only)_                | `event.touch_panel` | `long_touch`                |
 
 All new event entities are `disabled_by_default`, matching the previous behavior — enable them in the entity registry to use them.
 

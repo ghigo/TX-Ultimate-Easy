@@ -76,6 +76,7 @@ event:
     platform: template
     event_types:
       - multi_touch
+      - long_touch
       - swipe_${ID_SWIPE_LEFT_OR_UP_TEXT}
       - swipe_${ID_SWIPE_RIGHT_OR_DOWN_TEXT}
 
@@ -209,13 +210,19 @@ tx_ultimate_easy:
   uart: uart_touch
 
   on_long_touch_release:
-    - lambda: |-
-        const uint8_t touch_position = static_cast<uint8_t>(touch.x);
-        if (touch_position > ${TOUCH_POSITION_MAX_VALUE}) {  // Check for valid range
-          ESP_LOGE("${TAG_HW_TOUCH}", "Invalid long-touch position: %" PRIu8, touch_position);
-        } else {
+    then:
+      - lambda: |-
+          const uint8_t touch_position = static_cast<uint8_t>(touch.x);
+          if (touch_position > ${TOUCH_POSITION_MAX_VALUE}) {  // Check for valid range
+            ESP_LOGE("${TAG_HW_TOUCH}", "Invalid long-touch position: %" PRIu8, touch_position);
+            return;
+          }
+          esphome::tx_ultimate_easy::fire_ha_event("touch", "long_touch", {
+            {"action", "release"},
+            {"position", std::to_string(touch_position)}
+          });
           ESP_LOGI("${TAG_HW_TOUCH}", "Long-touch released at position %" PRIu8, touch_position);
-        }
+          ev_touch_panel->trigger("long_touch");
 
   on_multi_touch_release:
     then:
