@@ -29,7 +29,6 @@ event:
     icon: mdi:gesture-tap-button
     device_class: button
     internal: ${gang_count < 1}
-    disabled_by_default: true
     platform: template
     event_types:
       - click
@@ -40,7 +39,6 @@ event:
     icon: mdi:gesture-tap-button
     device_class: button
     internal: ${gang_count < 2}
-    disabled_by_default: true
     platform: template
     event_types:
       - click
@@ -51,7 +49,6 @@ event:
     icon: mdi:gesture-tap-button
     device_class: button
     internal: ${gang_count < 3}
-    disabled_by_default: true
     platform: template
     event_types:
       - click
@@ -62,7 +59,6 @@ event:
     icon: mdi:gesture-tap-button
     device_class: button
     internal: ${gang_count < 4}
-    disabled_by_default: true
     platform: template
     event_types:
       - click
@@ -72,7 +68,6 @@ event:
   - id: ev_touch_panel
     name: Touch panel
     icon: mdi:gesture
-    disabled_by_default: true
     platform: template
     event_types:
       - multi_touch
