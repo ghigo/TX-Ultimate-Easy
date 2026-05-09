@@ -77,6 +77,16 @@ trigger:
 
 The companion `homeassistant.event` bus events fired by the firmware (`esphome.tx_ultimate_easy` with `domain: touch`) are unchanged — automations using those continue to work without modification.
 
+### Diagnostic card cleanup
+
+Three Diagnostic-card entities are also removed:
+
+- `binary_sensor.boot_completed` — now firmware-internal. The on/off state still drives internal "skip during boot" guards and dump-config logging; users no longer see a misleading `Unknown` row.
+- `text_sensor.device_name` — duplicate of the device name shown in the card header. Use `App.get_name()` in templates if you need the sanitized name.
+- `text_sensor.tx_ultimate_easy_firmware_version` — duplicate of the OTA `update` entity (shown as **Firmware — Up-to-date** in the Configuration card) and the firmware string in the card header.
+
+Automations referencing these entities should switch to the OTA `update` entity / device card metadata.
+
 ## ⚠️ Breaking Changes in Version 2025.12.2
 
 **Action Required**: Existing users must update their YAML configuration to include new required substitutions.
