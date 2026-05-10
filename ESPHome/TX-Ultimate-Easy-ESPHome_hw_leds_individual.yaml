@@ -28,6 +28,11 @@ light:
     disabled_by_default: true
     default_transition_length: ${default_transition_length}
     restore_mode: ${LIGHT_INDIVIDUAL_RESTORE_MODE}
+    on_turn_off:
+      then:
+        # Fall the freshly-blacked single LED back to whichever directional /
+        # aggregate light is still on, otherwise the pixel stays dark.
+        - script.execute: repaint_underlying_lights
     segments:
       - id: light_full
         from: 0

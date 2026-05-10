@@ -65,6 +65,17 @@ light:
     default_transition_length: ${default_transition_length}
     internal: false
     restore_mode: ${LIGHT_SIDES_RESTORE_MODE}
+    on_turn_off:
+      then:
+        # Repaint directionals first so the freshly-blacked full strip falls back to
+        # whichever side is still on, then re-assert relay-state indicators on top.
+        # lights_all has priority over the indicator while it is on; turning it off
+        # should reveal both directionals and indicators again.
+        - script.execute: repaint_underlying_lights
+        - lambda: |-
+            #ifdef TX_ULTIMATE_EASY_HW_RELAYS
+            id(show_relay_status)->execute();
+            #endif
     effects:
       - addressable_rainbow:
           name: "Rainbow"
@@ -118,6 +129,14 @@ light:
     default_transition_length: ${default_transition_length}
     restore_mode: ${LIGHT_SIDES_RESTORE_MODE}
     internal: false
+    on_turn_on:
+      then:
+        # Re-assert relay-state indicators on top of the freshly painted directional
+        # so the indicator does not get visually erased when a side is turned on.
+        - lambda: |-
+            #ifdef TX_ULTIMATE_EASY_HW_RELAYS
+            id(show_relay_status)->execute();
+            #endif
     effects:
       - pulse:
           name: "Pulse"
@@ -186,6 +205,25 @@ light:
         reversed: false
 
 script:
+  # Re-publish any directional/aggregate light that is currently on so pixels recently
+  # overwritten by a relay segment, indicator, or per-LED override fall back to the
+  # underlying color rather than staying stale or black. ESPHome partitions don't
+  # compose; whoever wrote last wins, so re-publishing the still-on lights repaints
+  # over the freshly stale range.
+  - id: repaint_underlying_lights
+    mode: restart
+    then:
+      - lambda: |-
+          for (auto* l : std::initializer_list<light::LightState*>{
+                 id(lights_all), id(light_top), id(light_bottom),
+                 id(light_left), id(light_right) }) {
+            if (l->remote_values.is_on()) {
+              auto c = l->turn_on();
+              c.set_transition_length(0);
+              c.perform();
+            }
+          }
+
   - id: !extend dump_config
     then:
       - lambda: |-
