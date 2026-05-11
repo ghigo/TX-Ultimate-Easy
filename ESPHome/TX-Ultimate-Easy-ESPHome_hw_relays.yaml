@@ -161,6 +161,11 @@ light:
     disabled_by_default: false
     default_transition_length: ${default_transition_length}
     restore_mode: ${RELAYS_LIGHT_PARTITION_RESTORE_MODE}
+    on_turn_off:
+      then:
+        # Bisect step B. Inherited by all 20 light_rl_* partitions via the YAML
+        # anchor merge. Fires when a relay segment partition transitions to off.
+        - script.execute: repaint_underlying_lights
     segments:
       - id: light_full
         from: ${9 if IS_EU_MODEL else 15}
