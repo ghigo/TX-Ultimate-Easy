@@ -65,6 +65,15 @@ light:
     default_transition_length: ${default_transition_length}
     internal: false
     restore_mode: ${LIGHT_SIDES_RESTORE_MODE}
+    on_turn_off:
+      then:
+        # Bisect step E. Repaints directionals so the freshly-blacked full
+        # strip falls back, then re-asserts relay-state indicators on top.
+        - script.execute: repaint_underlying_lights
+        - lambda: |-
+            #ifdef TX_ULTIMATE_EASY_HW_RELAYS
+            id(show_relay_status)->execute();
+            #endif
     effects:
       - addressable_rainbow:
           name: "Rainbow"
