@@ -186,6 +186,24 @@ light:
         reversed: false
 
 script:
+  # Bisect step A: defined but not yet called from any hook. Re-publishes any
+  # directional/aggregate light that is currently on so pixels recently
+  # overwritten by a relay segment, indicator, or per-LED override fall back to
+  # the underlying color rather than staying stale or black.
+  - id: repaint_underlying_lights
+    mode: restart
+    then:
+      - lambda: |-
+          for (auto* l : std::initializer_list<light::LightState*>{
+                 id(lights_all), id(light_top), id(light_bottom),
+                 id(light_left), id(light_right) }) {
+            if (l->remote_values.is_on()) {
+              auto c = l->turn_on();
+              c.set_transition_length(0);
+              c.perform();
+            }
+          }
+
   - id: !extend dump_config
     then:
       - lambda: |-
