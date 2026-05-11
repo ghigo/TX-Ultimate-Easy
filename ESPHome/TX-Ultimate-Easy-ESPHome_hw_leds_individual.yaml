@@ -28,6 +28,10 @@ light:
     disabled_by_default: true
     default_transition_length: ${default_transition_length}
     restore_mode: ${LIGHT_INDIVIDUAL_RESTORE_MODE}
+    on_turn_off:
+      then:
+        # Bisect step C. Inherited by all 32 light_<NN> partitions.
+        - script.execute: repaint_underlying_lights
     segments:
       - id: light_full
         from: 0
