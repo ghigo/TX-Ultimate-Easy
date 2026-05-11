@@ -627,13 +627,18 @@ script:
                 // Skip the legacy fade so the relay segment hands off cleanly to whichever
                 // underlying light gets re-painted next; otherwise the user sees
                 // "fade to black" before the underlying color reappears.
-                call.set_transition_length(0);
+                // Not during boot: transition_length(0) forces perform() through
+                // set_immediately_(), which re-enters the underlying addressable
+                // controller before it is fully wired and crashes in schedule_write_().
+                // Pre-boot, fall back to the light's default_transition_length so the
+                // perform() goes through the safe transformer path instead.
+                if (id(bs_boot_completed)->state)
+                  call.set_transition_length(0);
                 call.perform();
 
-                // Skip the repaint during boot: a directional that restored to ON
-                // (preferences survive flashes) would otherwise re-enter the addressable
-                // pipeline before its controller is fully wired, crashing in
-                // schedule_write_().
+                // Skip the repaint during boot for the same reason: an underlying
+                // directional that restored to ON (preferences survive flashes) would
+                // re-enter the addressable pipeline before its controller is wired.
                 if (id(bs_boot_completed)->state) {
                   for (auto* l : std::initializer_list<light::LightState*>{
                          id(lights_all), id(light_top), id(light_bottom),
@@ -666,9 +671,9 @@ script:
                 ESP_LOGI("${TAG_HW_RELAYS}",
                           "Turn-off ${LIGHT_MODE_TOP_OR_RIGHT_TEXT} light for Relay %" PRIu8, light_index+1);
                 auto call = id(gb_lights_2)[light_index]->turn_off();
-                // See case 1 above for the rationale on transition_length(0), the repaint
-                // loop, and the boot gate.
-                call.set_transition_length(0);
+                // See case 1 above for the rationale on the boot gates.
+                if (id(bs_boot_completed)->state)
+                  call.set_transition_length(0);
                 call.perform();
 
                 if (id(bs_boot_completed)->state) {
