@@ -118,6 +118,15 @@ light:
     default_transition_length: ${default_transition_length}
     restore_mode: ${LIGHT_SIDES_RESTORE_MODE}
     internal: false
+    on_turn_on:
+      then:
+        # Bisect step D. Inherited by light_bottom/left/right/top. Re-asserts
+        # relay-state indicators after a directional paints, so the indicator
+        # does not get visually erased when a side is turned on.
+        - lambda: |-
+            #ifdef TX_ULTIMATE_EASY_HW_RELAYS
+            id(show_relay_status)->execute();
+            #endif
     effects:
       - pulse:
           name: "Pulse"
